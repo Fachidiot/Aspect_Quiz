@@ -26,4 +26,25 @@ public class WordList
             Debug.Log(Meaning);
         }
     }
+
+    public void Add(string _str1, string _str2)
+    {
+        Word temp = new Word(_str1, _str2);
+        m_WordList.Add(temp);
+    }
+
+    public string GetAnswer(int index)
+    {
+        return m_WordList[index].Answer;
+    }
+
+    public string GetMeaning(int index)
+    {
+        return m_WordList[index].Meaning;
+    }
+
+    public int Count()
+    {
+        return m_WordList.Count;
+    }
 }
