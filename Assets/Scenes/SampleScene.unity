@@ -299,6 +299,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16f1aec4314ea684b9522c64963dab0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  str_Filename: Resource/WordList.csv
 --- !u!4 &355526701
 Transform:
   m_ObjectHideFlags: 0
@@ -638,7 +639,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1131555895}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!4 &1131555898
 Transform:
   m_ObjectHideFlags: 0
@@ -779,7 +780,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -817,6 +818,8 @@ MonoBehaviour:
   GridSize: 8
   GridPrefab: {fileID: 1769911609918158602, guid: 181fa5905eddc5c489d5febb63e8bd8e,
     type: 3}
+  Vertical: {fileID: 0}
+  Horizontal: {fileID: 0}
 --- !u!1 &1476145610
 GameObject:
   m_ObjectHideFlags: 0
@@ -1028,7 +1031,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.5, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1331,7 +1334,6 @@ GameObject:
   - component: {fileID: 2108790866}
   - component: {fileID: 2108790865}
   - component: {fileID: 2108790864}
-  - component: {fileID: 2108790863}
   m_Layer: 5
   m_Name: CV_Main
   m_TagString: Untagged
@@ -1339,20 +1341,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2108790863
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2108790862}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eafdf278d6e8d884b9f7f0f64acff5b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GridSize: 0
-  GridPrefab: {fileID: 0}
 --- !u!114 &2108790864
 MonoBehaviour:
   m_ObjectHideFlags: 0

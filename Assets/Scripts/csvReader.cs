@@ -39,7 +39,12 @@ public class csvReader : MonoBehaviour
             }
 
             if (m_bExample)
+            {
+                var var_Value = str_Data.Split();
+                if (var_Value.Length < 2)
+                    m_bExample = false;
                 continue;
+            }
             else
             {
                 var var_Value = str_Data.Split(',');
@@ -48,6 +53,10 @@ public class csvReader : MonoBehaviour
             }
         }
 
+        if (templist.Count() <= 0)
+            Debug.LogError("Empty reading list");
+
+        Debug.Log("Successfully reading data");
         return templist;
     }
 
@@ -57,5 +66,15 @@ public class csvReader : MonoBehaviour
         {
             Debug.Log(m_WordList.GetMeaning(i) + m_WordList.GetAnswer(i));
         }
+    }
+
+    public static WordList GetList()
+    {
+        if (m_WordList.Count() <= 0)
+        {
+            Debug.LogError("[AccessException] : WordList is Empty");
+            return null;
+        }
+        return m_WordList;
     }
 }
