@@ -5,6 +5,15 @@ using UnityEngine;
 public class WordList
 {
     private List<Word> m_WordList = new List<Word>();
+    private static int m_Index = 0;
+    public int Index { get { return m_Index; } set { m_Index = value; } }
+    public int Count { get { return m_WordList.Count; } }
+
+    public void UseIndex(int index)
+    {
+        if(m_Index == index)
+            m_Index--;
+    }
 
     private class Word
     {
@@ -33,6 +42,7 @@ public class WordList
     {
         Word temp = new Word(_str1, _str2);
         m_WordList.Add(temp);
+        Index++;
     }
 
     public string GetAnswer(int index)
@@ -45,11 +55,6 @@ public class WordList
     {
         Debug.Log("Meaning lookup");
         return m_WordList[index].Meaning;
-    }
-
-    public int Count()
-    {
-        return m_WordList.Count;
     }
 
     public void DontUse(int index)

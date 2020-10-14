@@ -53,7 +53,7 @@ public class csvReader : MonoBehaviour
             }
         }
 
-        if (templist.Count() <= 0)
+        if (templist.Count <= 0)
             Debug.LogError("Empty reading list");
 
         Debug.Log("Successfully reading data");
@@ -62,7 +62,7 @@ public class csvReader : MonoBehaviour
 
     void PrintData()
     {
-        for (int i = 0; i < m_WordList.Count(); i++)
+        for (int i = 0; i < m_WordList.Count; i++)
         {
             Debug.Log(m_WordList.GetMeaning(i) + m_WordList.GetAnswer(i));
         }
@@ -70,7 +70,7 @@ public class csvReader : MonoBehaviour
 
     public static WordList GetList()
     {
-        if (m_WordList.Count() <= 0)
+        if (m_WordList.Count <= 0)
         {
             Debug.LogError("[AccessException] : WordList is Empty");
             return null;

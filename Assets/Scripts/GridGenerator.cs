@@ -11,39 +11,66 @@ public class GridGenerator : MonoBehaviour
     public GameObject Vertical;
     public GameObject Horizontal;
 
-    private GameObject[,] Grid;
+    private GameObject[,] m_Grid;
+    private int[,] temp_Grid;
+    // temp_Grid
+    // 0 = dontuse   1 = use
     private WordList m_WordList;
     private int m_Question = 0;
+    private int m_QuestionLength = 0;
 
     void Start()
     {
-        GridGenerate(this.GridSize);
+        TempGenerate(this.GridSize);
         m_WordList = csvReader.GetList();
         CheckList();
-        RandomGrid();
+        RandomSetGrid();
+        PrintGrid();
+        GridGenerate(this.GridSize);
     }
+
+    public void TempGenerate(int _wordCount)
+    {
+        temp_Grid = new int[_wordCount, _wordCount];
+        for (int i = 0; i < this.GridSize; i++)
+            for (int j = 0; j < this.GridSize; j++)
+            {
+                temp_Grid[i, j] = 0;
+            }
+    }
+
+    // GridGenerator
+    //public void GridGenerate(int _wordCount)
+    //{
+    //    gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(GridSize * 200, GridSize * 200);
+    //    m_Grid = new GameObject[_wordCount,_wordCount];
+    //    for (int i = 0; i < this.GridSize; i++)
+    //        for (int j = 0; j < this.GridSize; j++)
+    //        {
+    //            this.m_Grid[i, j] = Instantiate(GridPrefab, gameObject.transform);
+    //            this.m_Grid[i, j].transform.position += new Vector3((i - (GridSize - 1) / 2 + 0.3f) * 0.15f, (j - (GridSize - 2) / 2 - 0.3f) * 0.15f, 0);
+    //        }
+    //}
 
     // GridGenerator
     public void GridGenerate(int _wordCount)
     {
         gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(GridSize * 200, GridSize * 200);
-        Grid = new GameObject[_wordCount,_wordCount];
+        m_Grid = new GameObject[_wordCount, _wordCount];
         for (int i = 0; i < this.GridSize; i++)
             for (int j = 0; j < this.GridSize; j++)
             {
-                this.Grid[i, j] = Instantiate(GridPrefab, gameObject.transform);
-                this.Grid[i, j].transform.position += new Vector3((i - (GridSize - 1) / 2 + 0.3f) * 0.15f, (j - (GridSize - 2) / 2 - 0.3f) * 0.15f, 0);
+                if (temp_Grid[i, j] == 0)
+                    continue;
+                this.m_Grid[i, j] = Instantiate(GridPrefab, gameObject.transform);
+                this.m_Grid[i, j].transform.position += new Vector3((i - (GridSize - 1) / 2 + 0.3f) * 0.15f, (j - (GridSize - 2) / 2 - 0.3f) * 0.15f, 0);
             }
-    }
-
-    public void SetGrid()
-    {
     }
 
     void CheckList()
     {
         Debug.Log("리스트 체크");
-        for (int i = 0; i < m_WordList.Count(); i++)
+        for (int i = 0; i < m_WordList.Count; i++)
         {
             if (m_WordList.GetAnswer(i).Length > this.GridSize)
                 m_WordList.DontUse(i);
@@ -51,56 +78,93 @@ public class GridGenerator : MonoBehaviour
             else
                 m_Question++;
         }
-    }
-
-    void SetGrid(int x, int y, bool _close = true)
-    {
-        Grid[x, y].SetActive(_close);
-    }
-
-    // 규칙
-    // 1. 첫번째로 만들어질땐 무조건 가로먼저.
-    void RandomGrid()
-    {
-        Debug.Log("랜덤 셋팅을 시작합니다.");
-        int count = 0;
-        while(count == m_Question)
+        for (int i = 0; i < m_Question; i++)
         {
-            int x = Random.Range(0, this.GridSize - 1);
-            int y = Random.Range(0, this.GridSize - 1);
-            int index = Random.Range(0, this.m_Question - 1);
+            if (m_WordList.GetAnswer(i).Length > m_QuestionLength)
+                m_QuestionLength = m_WordList.GetAnswer(i).Length;
+        }
+    }
 
-            if (GetVerticalChain(x, y) >= m_WordList.GetAnswer(index).Length)
-            {
-                if (count / 2 == 0)
-                    SetVerticalChain(x, y, index);
-                else
-                    SetHorizontalChain(x, y, index);
-                count++;
-            }
-            else
-                RandomGrid();
+    void PrintGrid()
+    {
+        for (int i = 0; i < this.GridSize - 1; i++)
+        {
+            Debug.Log(temp_Grid[i, 0] + " " + temp_Grid[i, 1] + " " + temp_Grid[i, 2] + " " + temp_Grid[i, 3] + " " + temp_Grid[i, 4] + " " + temp_Grid[i, 5] + " " + temp_Grid[i, 6] + " " + temp_Grid[i, 7]);
+        }
+    }
+    
+    void RandomVerticalOpen(int index)
+    {
+        int x = Random.Range(0, this.GridSize - 1);
+        int y = Random.Range(0, this.GridSize - 1);
+
+        if (temp_Grid[x, y] == 0 && GetVerticalChain(x,y) >= m_QuestionLength)
+        {
+            SetVerticalChain(x, y, m_WordList.GetAnswer(index).Length);
+        }
+        else
+            RandomVerticalOpen(index);
+    }
+
+    void RandomHorizontalOpen(int index)
+    {
+        int x = Random.Range(0, this.GridSize - 1);
+        int y = Random.Range(0, this.GridSize - 1);
+
+        if (temp_Grid[x, y] == 0 && GetHorizontalChain(x, y) >= m_QuestionLength)
+        {
+            SetHorizontalChain(x, y, m_WordList.GetAnswer(index).Length);
+        }
+        else
+            RandomHorizontalOpen(index);
+    }
+
+    //int GetOpenTemp()
+    //{
+    //    int count = 0;
+    //    for (int i = 0; i < this.GridSize - 1; i++)
+    //        for (int j = 0; j < this.GridSize - 1; j++)
+    //            if (temp_Grid[i, j] == 1)
+    //                count++;
+    //    return count;
+    //}
+
+    void RandomSetGrid()
+    {
+        int index = 0;
+        while (true)
+        {
+            if (index == m_Question)
+                break;
+            RandomVerticalOpen(index);
+            index++;
+
+            if (index == m_Question)
+                break;
+            RandomHorizontalOpen(index);
+            index++;
         }
     }
 
     int GetVerticalChain(int x, int y)
     {
         int count = 0;
-        if (y < this.GridSize)
-            if (Grid[x, y].activeSelf == true)
+        if (y <= this.GridSize - 1)
+        {
+            if (temp_Grid[x, y] == 0)
             {
                 count++;
                 count += GetVerticalChain(x, y + 1);
             }
-
+        }
         return count;
     }
 
     int GetHorizontalChain(int x, int y)
     {
         int count = 0;
-        if (y < GridSize)
-            if (Grid[x, y].activeSelf == true)
+        if (x < this.GridSize - 1)
+            if (temp_Grid[x, y] == 0)
             {
                 count++;
                 count += GetHorizontalChain(x + 1, y);
@@ -109,17 +173,23 @@ public class GridGenerator : MonoBehaviour
         return count;
     }
 
-    void SetVerticalChain(int x, int y, int index)
+    void SetVerticalChain(int x, int y, int _count)
     {
-        // Vertical Word 생성
-        this.Grid[x, y] = Instantiate(Vertical, this.Grid[x,y].transform);
-        this.Grid[x, y].GetComponent<InputWord>().SetUp(m_WordList.GetAnswer(index), m_WordList.GetMeaning(index));
+        if (x < this.GridSize - 1)
+            if (_count != 0)
+            {
+                temp_Grid[x, y] = 1;
+                SetVerticalChain(x, y + 1, _count - 1);
+            }
     }
 
-    void SetHorizontalChain(int x, int y, int index)
+    void SetHorizontalChain(int x, int y, int _count)
     {
-        // Horizontal Word 생성
-        this.Grid[x, y] = Instantiate(Horizontal, this.Grid[x, y].transform);
-        this.Grid[x, y].GetComponent<InputWord>().SetUp(m_WordList.GetAnswer(index), m_WordList.GetMeaning(index));
+        if (x < this.GridSize - 1)
+            if (_count != 0)
+            {
+                temp_Grid[x, y] = 1;
+                SetHorizontalChain(x + 1, y, _count - 1);
+            }
     }
 }
