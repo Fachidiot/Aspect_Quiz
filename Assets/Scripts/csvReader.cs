@@ -14,6 +14,7 @@ public class csvReader : MonoBehaviour
     void Awake()
     {
         m_WordList = ReadData(str_Filename);
+        m_WordList.Disintegrate();
         PrintData();
     }
 
@@ -68,13 +69,20 @@ public class csvReader : MonoBehaviour
         }
     }
 
-    public static WordList GetList()
+    public static WordList GetList(int _count)
     {
         if (m_WordList.Count <= 0)
         {
             Debug.LogError("[AccessException] : WordList is Empty");
             return null;
         }
-        return m_WordList;
+        WordList TempList = new WordList();
+        for (int i = 0; i < _count; i++)
+        {
+            if (m_WordList.Count <= i)
+                break;
+            TempList.Add(m_WordList.GetInfo(i), m_WordList.GetAnswer(i), m_WordList.GetMeaning(i));
+        }
+        return TempList;
     }
 }
