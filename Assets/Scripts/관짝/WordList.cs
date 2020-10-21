@@ -172,12 +172,14 @@ public class WordList
             {
                 if (m_WordList[_index1].Parsing(i).ToString().ToLower() == m_WordList[_index2].Parsing(j).ToString().ToLower())
                 {
-                    m_WordList[_index1].WordInfo.Cross(m_WordList[_index2], i, m_WordList[_index1].Parsing(i).ToString().ToLower());
-                    return true;
+                    if(m_WordList[_index1].WordInfo.m_CrossIndex.Count == 0 || m_WordList[_index1].WordInfo.m_CrossIndex[m_WordList[_index1].WordInfo.m_CrossIndex.Count - 1] != j)
+                    {
+                        m_WordList[_index1].WordInfo.Cross(m_WordList[_index2], i, m_WordList[_index1].Parsing(i).ToString().ToLower());
+                    }
                 }
             }
         }
 
-        return false;
+        return true;
     }
 }

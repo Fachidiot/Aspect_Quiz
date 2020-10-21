@@ -65,19 +65,14 @@ public class csvReader : MonoBehaviour
     {
         for (int i = 0; i < m_WordList.Count; i++)
         {
-            Debug.Log(m_WordList.GetMeaning(i) + m_WordList.GetAnswer(i));
+            Debug.Log(m_WordList.GetAnswer(i));
         }
     }
 
     public static WordList GetList(int _count)
     {
-        if (m_WordList.Count <= 0)
-        {
-            Debug.LogError("[AccessException] : WordList is Empty");
-            return null;
-        }
         WordList TempList = new WordList();
-        for (int i = 0; i < _count; i++)
+        for (int i = 0; i < m_WordList.Count; i++)
         {
             if (m_WordList.Count <= i)
                 break;

@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 1769911609918158613}
   - component: {fileID: 1769911609918158615}
   - component: {fileID: 1769911609918158612}
-  - component: {fileID: 4309707249143728455}
   - component: {fileID: 511554507388332185}
+  - component: {fileID: 8549506531285648969}
   m_Layer: 5
-  m_Name: SP_Head
+  m_Name: OBJ_GRID
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -38,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -105, y: 0}
-  m_SizeDelta: {x: 120, y: 120}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1769911609918158615
 CanvasRenderer:
@@ -76,19 +76,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4309707249143728455
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769911609918158602}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e44ffe51fe604fa46a9a41079d2520e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Answer: {fileID: 4529570244473860073}
 --- !u!114 &511554507388332185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132,8 +119,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4309707249143728455}
-        m_MethodName: Show
+      - m_Target: {fileID: 0}
+        m_MethodName: ClickButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -143,6 +130,20 @@ MonoBehaviour:
           m_StringArgument: Hi
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &8549506531285648969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1769911609918158602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3080d336de45caf4ba9959cd80653971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Answer: {fileID: 4529570244473860073}
+  Mgr: {fileID: 0}
 --- !u!1 &8882915100961973779
 GameObject:
   m_ObjectHideFlags: 0
