@@ -1,10 +1,11 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class CrossWord : MonoBehaviour
 {
-    private List<Word> m_WordList;
+    private static List<Word> m_WordList;
 
     private int[] m_UsedIndex;
     
@@ -15,7 +16,7 @@ public class CrossWord : MonoBehaviour
         {
             CheckCross(i);
         }
-        print();
+        //print();
     }
 
     // 체크용
@@ -72,6 +73,7 @@ public class CrossWord : MonoBehaviour
 
     public List<Word> GetList()
     {
-        return m_WordList;
+        var temp = m_WordList.ToList();
+        return temp;
     }
 }

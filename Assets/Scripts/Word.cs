@@ -16,9 +16,12 @@ public class Word
     // 겹치는 단어(Word), 인덱스(int, int) 목록
     private List<List<string>> m_IndexInfo = new List<List<string>>();
     public List<List<string>> IndexInfo { get { return m_IndexInfo; } set { IndexInfo = value; } }
-    //ex) 0                     1                       2
-    //    Apple, (1, 4), false  Banana, (0, 3), false   Orange, (2, 4), false
-    //    Book, (4, 2), false   Note, (1, 3), false     Orange, (1, 3), false
+    //ex) 0              1                2
+    //    Apple, (1, 4)  Banana, (0, 3)   Orange, (2, 4)
+    //    Book, (4, 2)   Note, (1, 3)     Orange, (1, 3)
+
+    // 인덱스의 열린값
+    public bool[] m_bIsOpen;
 
     private string[,] n_IndexInfo;
     public string[,] nIndexInfo { get { return n_IndexInfo; } set { n_IndexInfo = value; } }
@@ -29,10 +32,12 @@ public class Word
         this.Answer = _answ;
         this.Meaning = _mean;
         this.m_Length = _answ.Length;
+        m_bIsOpen = new bool[m_Length];
         for (int i = 0; i < Length; i++)
         {
             var temp = new List<string>();
             this.m_IndexInfo.Add(temp);
+            this.m_bIsOpen[i] = true;
         }
     }
     
