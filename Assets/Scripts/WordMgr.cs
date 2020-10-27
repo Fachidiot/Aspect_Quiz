@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class WordMgr : MonoBehaviour
 {
@@ -15,52 +16,131 @@ public class WordMgr : MonoBehaviour
     [Header("Prefab")]
     public GameObject GridPrefab;
     [Header("Word Count")]
+    [Range(5, 15)]
     public int WordCount;
 
-    private int m_CurrentWordCount;
-    private List<GameObject> m_GridMgr;
+    // 생성될 위치
+    private float MakeX;
+    private float MakeY;
+
+    private List<GameObject> m_GridMakeList;
     private List<Word> m_WordList;
+    // 만들어진 단어 목록
+    private List<Word> m_MakeList;
+    public Word[] GetList()
+    {
+        var temp = m_MakeList.ToArray();
+        return temp;
+    }
+    // 지금 만들어줄 단어
+    private Word m_MakeWord;
+    // 다음에 만들어줄 단어
     private Word m_TempWord;
-    private string m_LastWord;
     private bool m_bIsMake;
+    public bool IsMake { get { return m_bIsMake; }set { m_bIsMake = value; } }
+    // 더이상 단어를 못만들어줄때
+    private bool m_bMakeAble;
+    private bool m_bVertical;
+    private int m_Reset;
+    private int m_CurrentWordCount;
+    private int safeloop;
 
     private void Awake()
     {
+        MakeX = StartX;
+        MakeY = StartY;
+        m_Reset = 5;
+        safeloop = 0;
         m_CurrentWordCount = 0;
         m_bIsMake = false;
-        m_GridMgr = new List<GameObject>();
+        m_bMakeAble = true;
+        m_bVertical = true;
+        m_GridMakeList = new List<GameObject>();
+        m_MakeList = new List<Word>();
+        m_WordList = new List<Word>();
     }
 
     private void Update()
     {
-        if(!m_bIsMake)
-            LinkLogic();
+        if(m_WordList.Count <= 0)
+        {
+            m_WordList = GameObject.Find("CrossMgr").GetComponent<CrossWord>().GetList();
+        }
+
+        if (!m_bIsMake && m_WordList.Count > 0)
+            Logic();
     }
 
-    void LinkLogic()
+    void Logic()
     {
-        m_WordList = GameObject.Find("CrossMgr").GetComponent<CrossWord>().GetList();
-
-        if (WordCount <= m_CurrentWordCount)
-            m_bIsMake = true;
-        // 루트 단어가 만들어 졌을때만
-        if (RootSet())
+        // 비상 탈출문
+        if (safeloop > 200)
         {
-            MakeGrid();
+            Debug.Log("더이상 만들수 있는 단어가 존재하지 않습니다.");
+            safeloop = 0;
+            m_bMakeAble = false;
+            //m_bIsMake = true;
+            return;
+        }
+        // 안전 탈출문
+        if (WordCount <= m_CurrentWordCount)
+        {
+            Debug.Log("모든 단어가 완성 되었습니다!");
             m_bIsMake = true;
-            //CheckQuater();
+            return;
+        }
+
+        if (m_GridMakeList.Count <= 0 || !m_bMakeAble)
+        {
+            Debug.Log("Root Word 생성 시퀀스");
+            // 생성전 루트가 생성될 위치를 잡아준다.
+            SetRootPos();
+
+            // 만들어진 리스트가 없다.(처음 생성) or 더이상 만들어줄 단어가 없다.
+            // 단어 생성
+            RootSet();
+        }
+
+        if(m_bMakeAble)
+        {
+            Debug.Log("Cross Word 생성 시퀀스");
+            safeloop++;
+            if (m_CurrentWordCount % 5 == 0)
+            {
+                m_Reset = 0;
+            }
+
+            if (m_Reset != 5)
+            {
+                if(m_CurrentWordCount >= 10)
+                {
+                    var temp = GameObject.Find(m_MakeList[m_Reset + 5].Answer + " " + 0.ToString());
+                    MakeX = temp.transform.localPosition.x;
+                    MakeY = temp.transform.localPosition.y;
+                    m_MakeWord = m_MakeList[m_Reset];
+                }
+                else
+                {
+                    var temp = GameObject.Find(m_MakeList[m_Reset].Answer + " " + 0.ToString());
+                    MakeX = temp.transform.localPosition.x;
+                    MakeY = temp.transform.localPosition.y;
+                    m_MakeWord = m_MakeList[m_Reset];
+                }
+            }
+
+            MakeRootCrossWord();
+            if (m_Reset != 5)
+            {
+                m_Reset++;
+            }
         }
     }
-    void UseWord(int index)
-    {
-        m_WordList.RemoveAt(index);
-    }
+
     void UseWord(Word _word)
     {
+        Debug.Log(_word.Answer + " 단어 삭제");
         m_WordList.Remove(_word);
     }
-
-
     static int count = 0;
     int CheckWord(int index)
     {
@@ -82,14 +162,17 @@ public class WordMgr : MonoBehaviour
 
         return temp;
     }
+
+    // 단어 생성
     void HorizontalMake()
     {
-        for (int i = 0; i < m_TempWord.Length; i++)
+        m_MakeList.Add(m_MakeWord);
+        for (int i = 0; i < m_MakeWord.Length; i++)
         {
             var temp = Instantiate(GridPrefab, this.gameObject.transform);
-            m_GridMgr.Add(temp);
-            temp.transform.localPosition = new Vector3(StartX, StartY + 110 * i, 0);
-            temp.name = m_TempWord.Answer + i;
+            m_GridMakeList.Add(temp);
+            temp.transform.localPosition = new Vector3(MakeX, MakeY + 110 * i, 0);
+            temp.name = m_MakeWord.Answer + " " + i;
             temp.tag = "Horizontal";
         }
 
@@ -97,83 +180,175 @@ public class WordMgr : MonoBehaviour
     }
     void VerticalMake()
     {
-        for (int i = 0; i < m_TempWord.Length; i++)
+        m_MakeList.Add(m_MakeWord);
+        for (int i = 0; i < m_MakeWord.Length; i++)
         {
             var temp = Instantiate(GridPrefab, this.gameObject.transform);
-            m_GridMgr.Add(temp);
-            temp.transform.localPosition = new Vector3(StartX + 110 * i, StartY, 0);
-            temp.name = m_TempWord.Answer + i;
+            m_GridMakeList.Add(temp);
+            temp.transform.localPosition = new Vector3(MakeX + 110 * i, MakeY, 0);
+            temp.name = m_MakeWord.Answer + " " + i;
             temp.tag = "Vertical";
         }
 
         m_CurrentWordCount++;
     }
-    bool CheckVertical()
+
+    // 단어가 겹치는지 체크
+    void SetRootPos()
     {
-        // 교차 정보 체크
+        // 생성전에 생성될 위치에 자리가 있는지 확인
         var templist = new List<GameObject>();
         templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
         templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
-        int temp = templist.Count;
-        int tempcount = 0;
-        for (int i = 0; i < temp; i++)
-        {
-            if (m_LastWord != null)
-            {
-                if (templist[i - tempcount].name.Contains(m_LastWord))
-                {
-                    templist.Remove(templist[i - tempcount]);
-                    tempcount++;
-                }
-            }
-        }
 
         for (int i = 0; i < templist.Count; i++)
         {
-            for (int j = 0; j < m_TempWord.Length + 2; j++)
+            // 생성된 Grid를 가져온다.
+            QuaterSection Section = new QuaterSection();
+
+            for (int j = 0; j < templist.Count; j++)
+            {
+                // 1분면 ( - , + )
+                if (templist[j].transform.localPosition.x < 0 && templist[j].transform.localPosition.y > 0)
+                {
+                    Section.Section1++;
+                }
+
+                // 2분면 ( - , - )
+                if (templist[j].transform.localPosition.x < 0 && templist[j].transform.localPosition.y < 0)
+                {
+                    Section.Section2++;
+                }
+
+                // 3분면 ( + , - )
+                if (templist[j].transform.localPosition.x > 0 && templist[j].transform.localPosition.y < 0)
+                {
+                    Section.Section3++;
+                }
+
+                // 4분면 ( + , + )
+                if (templist[j].transform.localPosition.x > 0 && templist[j].transform.localPosition.y > 0)
+                {
+                    Section.Section4++;
+                }
+            }
+
+            // 가장 적게 생성된면을 불러온다.
+            var num = Section.DisRank();
+            //Debug.Log(num + " 분면에 가장 적은 단어가 생성되었습니다.");
+
+            // 가장 적게 생성된면의 랜덤으로 좌표를 구한다.
+            MakeX += Section.GetX(num, Random.Range(-4, 4));
+            MakeY += Section.GetY(num, Random.Range(-4, 4));
+            return;
+        }
+    }
+    bool CheckRoot()
+    {
+        // 생성전에 생성될 위치에 자리가 있는지 확인
+        for (int i = 0; i < m_GridMakeList.Count; i++)
+        {
+            for (int j = 0; j < m_MakeWord.Length + 2; j++)
             {
                 // y축으로 이동하며 생성할 자리가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX, StartY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
-                if (templist[i].transform.localPosition == new Vector3(StartX + ((j - 1) * 110), StartY, 0))
+                //Debug.Log(m_GridMakeList[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
+                if (m_GridMakeList[i].transform.localPosition == new Vector3(MakeX + ((j - 1) * 110), MakeY, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
-                // y축으로 이동하며 위아래가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX + 110, StartY + (j * 110), 0));
-                if (templist[i].transform.localPosition == new Vector3(StartX + ((j - 1) * 110), StartY + 1, 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    return false;
-                }
+                if (j < m_MakeWord.Length)
+                {
+                    // y축으로 이동하며 위아래가 비어있는지 확인
+                    //Debug.Log(m_GridMakeList[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
+                    if (m_GridMakeList[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY + 110, 0))
+                    { // 비어있지 않을때
+                        Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                        return false;
+                    }
 
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX - 110, StartY + (j * 110), 0));
-                if (templist[i].transform.localPosition == new Vector3(StartX + ((j - 1) * 110), StartY - 1, 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    return false;
+                    //Debug.Log(m_GridMakeList[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
+                    if (m_GridMakeList[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY - 110, 0))
+                    { // 비어있지 않을때
+                        Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                        return false;
+                    }
                 }
             }
         }
 
+        //Debug.Log("겹치지 않습니다.");
         return true;
     }
     bool CheckHorizontal()
     {
-        // 교차 정보 체크
+        // 생성전에 생성될 위치에 자리가 있는지 확인
         var templist = new List<GameObject>();
         templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
         templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
-        int temp = templist.Count;
         int tempcount = 0;
-        for (int i = 0; i < temp; i++)
+        int maxcount = templist.Count;
+        for (int i = 0; i < maxcount; i++)
         {
-            if(m_LastWord != null)
+            if (templist[i - tempcount].name.Contains(m_MakeWord.Answer))
             {
-                if (templist[i - tempcount].name.Contains(m_LastWord))
+                templist.RemoveAt(i - tempcount);
+                tempcount++;
+            }
+        }
+
+        for (int i = 0; i < templist.Count; i++)
+        {
+            for (int j = 0; j < m_MakeWord.Length; j++)
+            {
+                // y축으로 이동하며 생성할 자리가 비어있는지 확인
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
+                if (templist[i].transform.localPosition == new Vector3(MakeX, MakeY + (j * 110), 0))
+                { // 비어있지 않을때
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    return false;
+                }
+
+                // y축으로 이동하며 위아래가 비어있는지 확인
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
+                if (templist[i].transform.localPosition == new Vector3(MakeX + 1, MakeY + (j * 110), 0))
+                { // 비어있지 않을때
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    return false;
+                }
+
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
+                if (templist[i].transform.localPosition == new Vector3(MakeX - 1, MakeY + (j * 110), 0))
+                { // 비어있지 않을때
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    return false;
+                }
+            }
+        }
+
+        //Debug.Log("겹치지 않습니다.");
+        return true;
+    }
+    bool CheckCrossHorizontal(bool first = true)
+    {
+        if (!CheckQuater())
+        {
+            return false;
+        }
+        // 생성전에 생성될 위치에 자리가 있는지 확인
+        var templist = new List<GameObject>();
+        templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
+        templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
+        if (first)
+        {
+            int tempcount = 0;
+            int maxcount = templist.Count;
+            for (int i = 0; i < maxcount; i++)
+            {
+                if (templist[i - tempcount].name.Contains(m_MakeWord.Answer))
                 {
-                    templist.Remove(templist[i - tempcount]);
+                    templist.RemoveAt(i - tempcount);
                     tempcount++;
                 }
             }
@@ -184,363 +359,332 @@ public class WordMgr : MonoBehaviour
             for (int j = 0; j < m_TempWord.Length + 2; j++)
             {
                 // y축으로 이동하며 생성할 자리가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX, StartY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
-                if (templist[i].transform.localPosition == new Vector3(StartX, StartY + ((j - 1) * 110), 0))
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
+                if (templist[i].transform.localPosition == new Vector3(MakeX, MakeY + ((j - 1) * 110), 0))
                 { // 비어있지 않을때
                     Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    return false;
+                }
+
+                if(j < m_TempWord.Length)
+                {
+                    // y축으로 이동하며 위아래가 비어있는지 확인
+                    //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
+                    if (templist[i].transform.localPosition == new Vector3(MakeX + 110, MakeY + (j * 110), 0))
+                    { // 비어있지 않을때
+                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        return false;
+                    }
+
+                    //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
+                    if (templist[i].transform.localPosition == new Vector3(MakeX - 110, MakeY + (j * 110), 0))
+                    { // 비어있지 않을때
+                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        //Debug.Log("겹치지 않습니다.");
+        return true;
+    }
+    bool CheckVertical()
+    {
+        // 생성전에 생성될 위치에 자리가 있는지 확인
+        var templist = new List<GameObject>();
+        templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
+        templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
+        int tempcount = 0;
+        int maxcount = templist.Count;
+        for (int i = 0; i < maxcount; i++)
+        {
+            if (templist[i - tempcount].name.Contains(m_MakeWord.Answer))
+            {
+                templist.RemoveAt(i - tempcount);
+                tempcount++;
+            }
+        }
+
+        for (int i = 0; i < templist.Count; i++)
+        {
+            for (int j = 0; j < m_MakeWord.Length; j++)
+            {
+                // y축으로 이동하며 생성할 자리가 비어있는지 확인
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
+                if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY, 0))
+                { // 비어있지 않을때
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
                 // y축으로 이동하며 위아래가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX + 110, StartY + (j * 110), 0));
-                if (templist[i].transform.localPosition == new Vector3(StartX + 1, StartY + ((j - 1) * 110), 0))
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
+                if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY + 1, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX - 110, StartY + (j * 110), 0));
-                if (templist[i].transform.localPosition == new Vector3(StartX - 1, StartY + ((j - 1) * 110), 0))
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
+                if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY - 1, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
             }
         }
 
+        //Debug.Log("겹치지 않습니다.");
+        return true;
+    }
+    bool CheckCrossVertical(bool first = true)
+    {
+        if (!CheckQuater())
+        {
+            return false;
+        }
+        // 생성전에 생성될 위치에 자리가 있는지 확인
+        var templist = new List<GameObject>();
+        templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
+        templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
+
+        if (first)
+        {
+            int tempcount = 0;
+            int maxcount = templist.Count;
+            for (int i = 0; i < maxcount; i++)
+            {
+                if (templist[i - tempcount].name.Contains(m_MakeWord.Answer))
+                {
+                    templist.RemoveAt(i - tempcount);
+                    tempcount++;
+                }
+            }
+        }
+
+        for (int i = 0; i < templist.Count; i++)
+        {
+            for (int j = 0; j < m_TempWord.Length + 2; j++)
+            {
+                // y축으로 이동하며 생성할 자리가 비어있는지 확인
+                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
+                if (templist[i].transform.localPosition == new Vector3(MakeX + ((j - 1) * 110), MakeY, 0))
+                { // 비어있지 않을때
+                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    return false;
+                }
+
+                if(j < m_TempWord.Length)
+                {
+                    // y축으로 이동하며 위아래가 비어있는지 확인
+                    //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
+                    if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY + 110, 0))
+                    { // 비어있지 않을때
+                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        return false;
+                    }
+
+                    //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
+                    if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY - 110, 0))
+                    { // 비어있지 않을때
+                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        //Debug.Log("겹치지 않습니다.");
         return true;
     }
 
-    // 루트가 될 단어를 뽑고 생성해주기
-    // proccess
-    // 1. 자신 단어가 겹치지 않을때만
-    // 2. h로 생성될 단어가 열려 있을때만
-    // 3. h로 생성될 단어의 위치가 겹치지 않을때만
-    // 4. 생성
-
-    bool RootSet()
+    // 루트가 될 단어를 생성해줌
+    void RootSet()
     {
-        if (m_CurrentWordCount >= WordCount)
-        {
-            Debug.Log("모든 단어가 완성 되었습니다!");
-            return false;
-        }
-
         // 루트가 될 단어를 랜덤으로 뽑는다.
         var index = Random.Range(0, m_WordList.Count);
-        m_TempWord = m_WordList[index];
+        m_MakeWord = m_WordList[index];
 
-        // 랜덤으로 뽑은 인덱스(알파벳)와 인덱스의 인덱스(알파벳과 교차하는 단어 리스트)
-        int rand_alphabetindex = 0;
-        int rand_wordindex = 0;
-
-        int safecount = 0;
-        while(true)
+        int tempcount = 0;
+        // 크로스 워드가 있는지
+        for (int i = 0; i < m_MakeWord.IndexInfo.Count; i++)
         {
-            // temp = 단어의 알파벳 인덱스
-            var temp = Random.Range(0, m_TempWord.IndexInfo.Count);
-
-            // 해당 리스트에 교차되는 단어가 없을때
-            if (m_TempWord.IndexInfo[temp].Count <= 0)
+            if (m_MakeWord.IndexInfo[i].Count > 0)
             {
-                // 만약 전체 인덱스에 교차되는 단어가 1개도 없을때 무한루프에 빠지지 않도록 해준다.
-                if (m_TempWord.IndexInfo.Count <= safecount)
-                {
-                    Debug.Log("교차단어가 없는 단어 발견!");
-
-                    // 단어리스트 오류
-
-                    UseWord(index);
-                    return false;
-                }
-                safecount++;
-                continue;
+                tempcount += m_MakeWord.IndexInfo[i].Count;
             }
-            
-            // 교차 단어가 있을때
-            rand_alphabetindex = temp;
-            count = 0;
-            rand_wordindex = CheckWord(rand_alphabetindex);
-            if (rand_wordindex == -1)
-            {
-                Debug.Log("교차 단어중 생성가능한게 없습니다.");
-                continue;
-            }
-            break;
         }
 
-        // 교차 정보
-        string val = m_TempWord.IndexInfo[rand_alphabetindex][rand_wordindex];
-        // 0 : Word, 1 : index1, 2 : index2
-        var temp_string = val.Split(',');
-        int _1 = int.Parse(temp_string[1]);
-        int _2 = int.Parse(temp_string[2]);
-
-        // 교차 정보 체크
-        if(CheckVertical())
+        if (tempcount <= 0)
         {
-            Debug.Log("Root Word Make");
-            Debug.Log(m_TempWord.Answer + " 단어를 생성합니다.");
+            Debug.Log("크로스 가능한 단어가 없습니다.");
+            return;
+        }
+        Debug.Log("크로스 가능한 단어의 개수 : " + tempcount);
+
+        //if(!m_bMakeAble)
+        //{
+        //    var temp = GameObject.Find(m_MakeList[m_MakeList.Count - 1].Answer + " " + 0.ToString());
+        //    MakeX = temp.transform.localPosition.x;
+        //    MakeY = temp.transform.localPosition.y;
+        //}
+
+        if(m_CurrentWordCount == 0)
+        {
+            Debug.Log(m_MakeWord.Answer + " 단어를 생성합니다.");
+            Debug.Log("Root Word 생성 완료");
+            // 생성해준다.
             VerticalMake();
-            m_TempWord.m_bIsOpen[_1] = false;
-
-            // 삭제전 단어 저장
-            m_LastWord = m_TempWord.Answer;
-            // 단어 생성후에 단어를 리스트에서 삭제해준다.
-            UseWord(index);
-
-            // 생성후에는 다음에 만들 단어를 저장해준다.
-            m_TempWord = FindWord(temp_string[0]);
-            m_TempWord.m_bIsOpen[_2] = false;
-            // 다음 생성될 단어의 위치도 저장해준다.
-            StartX = StartX + (_1 * 110);
-            StartY = StartY - (_2 * 110);
-
-            if(CheckHorizontal())
-            {
-                if (m_CurrentWordCount >= WordCount)
-                {
-                    Debug.Log("모든 단어가 완성 되었습니다!");
-                    return false;
-                }
-
-                // 저장된 단어를 생성해준다.
-                Debug.Log("Second Word Make");
-                Debug.Log(m_TempWord.Answer + " 단어를 생성합니다.");
-                HorizontalMake();
-
-                return true;
-            }
-            return false;
+            // 생성해주고 리스트에서 삭제
+            UseWord(m_MakeWord);
+            // 다음 단어는 Horizontal임을 표시
+            m_bMakeAble = true;
+            return;
+        }
+        else if (CheckRoot())
+        { // 겹치지 않음
+            Debug.Log(m_MakeWord.Answer + " 단어를 생성합니다.");
+            Debug.Log("Root Word 생성 완료");
+            // 생성해준다.
+            VerticalMake();
+            // 생성해주고 리스트에서 삭제
+            UseWord(m_MakeWord);
+            // 다음 단어는 Horizontal임을 표시
+            m_bMakeAble = true;
+            return;
         }
 
-        return false;
+        Debug.Log("Root Word 생성 실패");
+        safeloop++;
+        SetRootPos();
+        m_bMakeAble = false;
+        return;
     }
-    
-    // 루트 단어에 맞춰 생성해주기
-    void MakeGrid()
+
+    // 루트에 교차되는 단어를 생성
+    void MakeRootCrossWord()
     {
-        // 단어가 없다면 return
-        if (m_WordList.Count <= 0)
-            return;
-
-        bool IsMake = false;
-        // 만약 다음에 만들 단어의 양옆이 비어있을때만 생성
-        for (int i = 0; i < m_TempWord.IndexInfo.Count; i++)
-        {
-            // 해당 인덱스가 열려있을때
-            if (m_TempWord.m_bIsOpen[i] == true && !IsMake)
-            {
-                // 인덱스의 끝일때
-                if (i + 1 != m_TempWord.Length)
-                {
-                    // 인덱스의 다음 인덱스가 비어있는지 확인 해준다.
-                    if (m_TempWord.m_bIsOpen[i + 1] != true)
-                    { // 비어있지 않을때
-                      // 다시 찾는다.
-                        continue;
-                    }
-                }
-                // 인덱스의 처음이 아닐때
-                if (i - 1 != -1)
-                {
-                    // 인덱스의 이전 인덱스가 비어있는지 확인 해준다.
-                    if (m_TempWord.m_bIsOpen[i - 1] != true)
-                    { // 비어있지 않을때
-                      // 다시 찾는다.
-                        continue;
-                    }
-                }
-
-
-                int rand_wordindex = 0;
-                // 랜덤으로 단어를 갖고 온다.
-                for (int j = 0; j < m_TempWord.IndexInfo[i].Count; j++)
-                {
-                    count = 0;
-                    rand_wordindex = CheckWord(i);
-                    if (rand_wordindex == -1)
-                    {
-                        Debug.Log("교차 단어중 생성가능한게 없습니다.");
-
-                        // 단어를 리스트에서 지워준다.
-                        UseWord(m_TempWord);
-
-                        return;
-                    }
-                    string temp = m_TempWord.IndexInfo[i][rand_wordindex];
-                    var temp_string = temp.Split(',');
-                    // 단어가 있을때
-                    if(HasWord(temp_string[0]))
-                    { // 단어를 만들어준다.
-                        // 0 : Word, 1 : index1, 2 : index2
-                        int _1 = int.Parse(temp_string[1]);
-                        int _2 = int.Parse(temp_string[2]);
-
-                        // 단어를 리스트에서 지워준다.
-                        UseWord(m_TempWord);
-
-                        // 다음에 만들 단어를 저장해준다.
-                        m_TempWord = FindWord(temp_string[0]);
-                        m_LastWord = temp_string[0];
-                        Debug.Log(m_TempWord.Answer + " 단어를 생성합니다.");
-                        //Debug.Log(_1 + " Index, " + _2 + " Index");
-                        m_TempWord.m_bIsOpen[_2] = false;
-                        // 다음 생성될 단어의 위치도 저장해준다.
-                        StartX = StartX - (_2 * 110);
-                        StartY = StartY + (_1 * 110);
-
-                        IsMake = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // 다음 생성될 단어를 못찾은 경우
-        if(!IsMake)
-            return;
-
+        m_bVertical = !m_bVertical;
+        // 단어 찾기 전 만들수 있는지 여부
         if (m_CurrentWordCount >= WordCount)
         {
             Debug.Log("모든 단어가 완성 되었습니다!");
+            safeloop = 0;
+            m_bMakeAble = false;
             return;
         }
 
-        Debug.Log("Third Word Make");
-        VerticalMake();
-
-        // 단어가 없다면 return
-        if (m_WordList.Count <= 0)
-            return;
-
-        //  -   -   -   -   -   -   -   -   -
-        //  -   -   -   -   a   0   0   -   -
-        //  -   -   -   -   p   -   -   -   -
-        //  -   -   -   o   p   e   n   -   -
-        // 마지막으로 한번만 더 생성 가능한지 체크해준다.
-        bool IsMake2 = false;
-
-        // 만약 다음에 만들 단어의 양옆이 비어있을때만 생성
-        for (int i = 0; i < m_TempWord.IndexInfo.Count; i++)
-        {
-            // 해당 인덱스가 열려있을때
-            if (m_TempWord.m_bIsOpen[i] == true && !IsMake2)
-            {
-                // 인덱스의 끝일때
-                if (i + 1 != m_TempWord.Length)
-                {
-                    // 인덱스의 다음 인덱스가 비어있는지 확인 해준다.
-                    if (m_TempWord.m_bIsOpen[i + 1] != true)
-                    { // 비어있지 않을때
-                      // 다시 찾는다.
+        // 크로스 워드가 있는지
+        for (int i = 0; i < m_MakeWord.IndexInfo.Count; i++)
+        { // 크로스 워드가 존재할때
+            if (m_MakeWord.m_bIsOpen[i] == true)
+            { // 단어의 인덱스가 열려 있을때
+                if (i + 1 != m_MakeWord.Length)
+                { // 인덱스의 끝이 아닐때
+                    if (m_MakeWord.m_bIsOpen[i + 1] != true)
+                    { // 인덱스의 다음 인덱스가 비어있지 않을때
+                        // 다시 찾는다.
                         continue;
                     }
                 }
-                // 인덱스의 처음이 아닐때
                 if (i - 1 != -1)
-                {
-                    // 인덱스의 이전 인덱스가 비어있는지 확인 해준다.
-                    if (m_TempWord.m_bIsOpen[i - 1] != true)
-                    { // 비어있지 않을때
-                      // 다시 찾는다.
+                { // 인덱스의 처음이 아닐때
+                    if (m_MakeWord.m_bIsOpen[i - 1] != true)
+                    { // 인덱스의 이전 인덱스가 비어있지 않을때
+                        // 다시 찾는다.
                         continue;
                     }
                 }
 
+                // 인덱스는 생성가능
+                //Debug.Log("인덱스 검사 결과 생성 가능");
 
-                int rand_wordindex = 0;
-                // 랜덤으로 단어를 갖고 온다.
-                for (int j = 0; j < m_TempWord.IndexInfo[i].Count; j++)
+                for (int j = 0; j < m_MakeWord.IndexInfo[i].Count; j++)
                 {
-                    count = 0;
-                    rand_wordindex = CheckWord(i);
-                    if (rand_wordindex == -1)
-                    {
-                        Debug.Log("교차 단어중 생성가능한게 없습니다.");
-
-                        // 단어를 리스트에서 지워준다.
-                        UseWord(m_TempWord);
-
-                        return;
-                    }
-                    string temp = m_TempWord.IndexInfo[i][rand_wordindex];
+                    string temp = m_MakeWord.IndexInfo[i][j];
+                    // 0 : Word, 1 : index1, 2 : index2
                     var temp_string = temp.Split(',');
-                    // 단어가 있을때
+                    int _1 = int.Parse(temp_string[1]);
+                    int _2 = int.Parse(temp_string[2]);
+                    m_TempWord = FindWord(temp_string[0]);
+
                     if (HasWord(temp_string[0]))
-                    { // 단어를 만들어준다.
-                        // 0 : Word, 1 : index1, 2 : index2
-                        int _1 = int.Parse(temp_string[1]);
-                        int _2 = int.Parse(temp_string[2]);
+                    { // 단어가 있을때
+                      //Debug.Log("해당 단어는 생성 가능 합니다.");
 
-                        // 단어를 리스트에서 지워준다.
-                        UseWord(m_TempWord);
+                        // 만들어진 리스트에서 교차되는 단어가 있고,
+                        // 다른 단어들과 겹치지 말아야함(교차되는 단어는 제외)
+                        float tempx = MakeX;
+                        float tempy = MakeY;
+                        if (m_bVertical)
+                        {
+                            MakeX = MakeX - (_2 * 110);
+                            MakeY = MakeY + (_1 * 110);
 
-                        // 다음에 만들 단어를 저장해준다.
-                        m_TempWord = FindWord(temp_string[0]);
-                        Debug.Log(m_TempWord.Answer + " 단어를 생성합니다.");
-                        //Debug.Log(_1 + " Index, " + _2 + " Index");
-                        m_TempWord.m_bIsOpen[_2] = false;
-                        // 다음 생성될 단어의 위치도 저장해준다.
-                        StartX = StartX + (_1 * 110);
-                        StartY = StartY - (_2 * 110);
+                            if (CheckCrossVertical())
+                            {
+                                Debug.Log(m_TempWord.Answer + " 단어를 생성합니다.");
+                                Debug.Log("Cross Word 생성 완료 with " + m_MakeWord.Answer);
+                                m_MakeWord.m_bIsOpen[_1] = false;
+                                m_TempWord.m_bIsOpen[_2] = false;
+                                // 다음 생성될 단어의 위치도 저장해준다.
+                                m_MakeWord = m_TempWord;
+                                VerticalMake();
+                                // 생성해주고 리스트에서 삭제
+                                UseWord(m_MakeWord);
+                                // 다음 단어는 Horizontal임을 표시
+                                return;
+                            }
+                            else
+                            {
+                                MakeX = tempx;
+                                MakeY = tempy;
+                                safeloop++;
+                            }
+                        }
+                        else
+                        {
+                            MakeX = MakeX + (_1 * 110);
+                            MakeY = MakeY - (_2 * 110);
 
-                        IsMake2 = true;
-                        break;
+                            if (CheckCrossHorizontal())
+                            {
+                                Debug.Log(m_TempWord.Answer + " 단어를 생성합니다.");
+                                Debug.Log("Cross Word 생성 완료 with " + m_MakeWord.Answer);
+                                m_MakeWord.m_bIsOpen[_1] = false;
+                                m_TempWord.m_bIsOpen[_2] = false;
+                                // 다음 생성될 단어의 위치도 저장해준다.
+                                m_MakeWord = m_TempWord;
+                                HorizontalMake();
+                                // 생성해주고 리스트에서 삭제
+                                UseWord(m_MakeWord);
+                                // 다음 단어는 Horizontal임을 표시
+                                return;
+                            }
+                            else
+                            {
+                                MakeX = tempx;
+                                MakeY = tempy;
+                                safeloop++;
+                            }
+                        }
+                    }
+                    else
+                    { // 단어가 이미 생성되었을때
+                        Debug.Log(temp_string[0] + "해당 단어는 이미 생성되었습니다. 건너뜀");
+                        safeloop++;
+                        continue;
                     }
                 }
             }
         }
 
-        // 생성전에 생성될 위치에 자리가 있는지 확인
-        var templist = new List<GameObject>();
-        templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
-        for (int i = 0; i < templist.Count; i++)
+        if(m_Reset == 5)
         {
-            if (templist[i].name.Contains(m_LastWord))
-                templist.RemoveAt(i);
+            // 생성 가능한 단어가 없다.
+            m_bMakeAble = false;
         }
-
-        for (int i = 0; i < templist.Count; i++)
-        {
-            for (int j = 0; j < m_TempWord.Length; j++)
-            {
-                // y축으로 이동하며 생성할 자리가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX, StartY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
-                if (templist[i].transform.localPosition == new Vector3(StartX, StartY + (j  * 110), 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    return;
-                }
-
-                // y축으로 이동하며 위아래가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX + 110, StartY + (j * 110), 0));
-                if (templist[i].transform.localPosition == new Vector3(StartX + 1, StartY + (j * 110), 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    return;
-                }
-
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX - 110, StartY + (j * 110), 0));
-                if (templist[i].transform.localPosition == new Vector3(StartX - 1, StartY + (j * 110), 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    return;
-                }
-            }
-        }
-
-        if (m_CurrentWordCount >= WordCount)
-        {
-            Debug.Log("모든 단어가 완성 되었습니다!");
-            return;
-        }
-
-        // 단어를 리스트에서 지워준다.
-        UseWord(m_TempWord);
-
-        Debug.Log("Fourth Word Make");
-        HorizontalMake();
     }
 
 
@@ -713,110 +857,89 @@ public class WordMgr : MonoBehaviour
         }
     }
 
-    void CheckQuater()
+    bool CheckQuater()
     {
-        // 생성된 Grid를 가져온다.
-        var templist = new List<GameObject>();
-        templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
-        templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
-        QuaterSection Section = new QuaterSection();
-
-        //Section.Section1_MinMax = new QuaterSection.IntQuater(MinX, 0, 0, MaxY);
-        //Section.Section2_MinMax = new QuaterSection.IntQuater(MinX, MinY, 0, 0);
-        //Section.Section3_MinMax = new QuaterSection.IntQuater(0, MinY, MaxX, 0);
-        //Section.Section4_MinMax = new QuaterSection.IntQuater(0, 0, MaxX, MaxY);
-
-        for (int i = 0; i < templist.Count; i++)
-        {
-            // 1분면 ( - , + )
-            if (templist[i].transform.localPosition.x < 0 && templist[i].transform.localPosition.y > 0)
+        // 생성될때 Rect안에만 생성되도록 체크
+        if (m_MakeWord.Length * 110 + StartX >= 0)
+        { // x 양수
+            if(m_MakeWord.Length * 110 + StartX < MaxX)
             {
-                Section.Section1++;
+                if (m_MakeWord.Length * 110 + StartY >= 0)
+                { // 양수
+                    if (m_MakeWord.Length * 110 + StartY < MaxY)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+                else
+                { // 음수
+                    if (StartY > MinY)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
             }
-
-            // 2분면 ( - , - )
-            if (templist[i].transform.localPosition.x < 0 && templist[i].transform.localPosition.y < 0)
-            {
-                Section.Section2++;
-            }
-
-            // 3분면 ( + , - )
-            if (templist[i].transform.localPosition.x > 0 && templist[i].transform.localPosition.y < 0)
-            {
-                Section.Section3++;
-            }
-
-            // 4분면 ( + , + )
-            if (templist[i].transform.localPosition.x > 0 && templist[i].transform.localPosition.y > 0)
-            {
-                Section.Section4++;
-            }
+            return false;
         }
-
-        // 가장 적게 생성된면을 불러온다.
-        var num = Section.DisRank();
-        //Debug.Log(num + " 분면에 가장 적은 단어가 생성되었습니다.");
-
-        // 가장 적게 생성된면의 랜덤으로 좌표를 구한다.
-        StartX = Section.GetX(num, Random.Range(0, 9));
-        StartY = Section.GetY(num, Random.Range(0, 9));
-
-        // 구해진 좌표 체크 : 생성전에 생성될 위치에 자리가 있는지 확인
-        var templist2 = new List<GameObject>();
-        templist2.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
-        templist2.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
-
-        for (int i = 0; i < templist2.Count; i++)
-        {
-            for (int j = 0; j < m_TempWord.Length; j++)
+        else
+        { // x 음수
+            if (StartX < MinX)
             {
-                // y축으로 이동하며 생성할 자리가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX, StartY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
-                if (templist2[i].transform.localPosition == new Vector3(StartX + (j * 110), StartY, 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    CheckQuater();
+                if (m_MakeWord.Length * 110 + StartY >= 0)
+                { // 양수
+                    if (m_MakeWord.Length * 110 + StartY < MaxY)
+                    {
+                        return true;
+                    }
+                    return false;
                 }
-
-                // y축으로 이동하며 위아래가 비어있는지 확인
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX + 110, StartY + (j * 110), 0));
-                if (templist2[i].transform.localPosition == new Vector3(StartX + (j * 110), StartY + 1, 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    CheckQuater();
-                }
-
-                //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(StartX - 110, StartY + (j * 110), 0));
-                if (templist2[i].transform.localPosition == new Vector3(StartX + (j * 110), StartY - 1, 0))
-                { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
-                    CheckQuater();
+                else
+                { // 음수
+                    if (StartY > MinY)
+                    {
+                        return true;
+                    }
+                    return false;
                 }
             }
+            return false;
         }
     }
 
     public void RESET()
     {
-        Debug.Log("Reset Start");
         Resetting();
-        m_bIsMake = false;
+        Debug.Log("Reset Make");
+        MakeX = StartX;
+        MakeY = StartY;
+        m_Reset = 5;
+        safeloop = 0;
         m_CurrentWordCount = 0;
+        m_bIsMake = false;
+        m_bMakeAble = true;
+        m_bVertical = true;
+        m_MakeList = new List<Word>();
+        m_WordList = GameObject.Find("CrossMgr").GetComponent<CrossWord>().GetList();
     }
     public IEnumerator Reset()
     {
-        Debug.Log("Reset Start");
+        Debug.Log("Reset Make");
         Resetting();
         m_bIsMake = false;
         yield return new WaitForSeconds(2f);
     }
     void Resetting()
     {
-        var temp = m_GridMgr.Count;
+        var temp = m_GridMakeList.Count;
         for (int i = 0; i < temp; i++)
         {
-            Destroy(m_GridMgr[i]);
+            Destroy(m_GridMakeList[i]);
         }
+
+        m_GridMakeList.RemoveRange(0, m_GridMakeList.Count);
+        m_MakeList.RemoveRange(0, m_MakeList.Count);
     }
 
     Word FindWord(string _word)
@@ -839,5 +962,20 @@ public class WordMgr : MonoBehaviour
         }
 
         return false;
+    }
+
+    public void SetEasy()
+    {
+        WordCount = 5;
+    }
+
+    public void SetNormal()
+    {
+        WordCount = 10;
+    }
+
+    public void SetHard()
+    {
+        WordCount = 10;
     }
 }

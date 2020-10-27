@@ -6,7 +6,7 @@ public class GridMake : MonoBehaviour
 {
     public GameObject GridPrefab;
     
-    private LinkedList<Word> m_LinkMap;
+    private LinkedList<Word> m_LinkMap = new LinkedList<Word>();
     private LinkedListNode<Word> m_Pointer;
     private GameObject m_WordMgr;
 

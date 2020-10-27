@@ -15,7 +15,7 @@ public class Word
     
     // 겹치는 단어(Word), 인덱스(int, int) 목록
     private List<List<string>> m_IndexInfo = new List<List<string>>();
-    public List<List<string>> IndexInfo { get { return m_IndexInfo; } set { IndexInfo = value; } }
+    public List<List<string>> IndexInfo { get { return m_IndexInfo; } set { IndexInfo = value; } } // 겹치는 단어와 인덱스
     //ex) 0              1                2
     //    Apple, (1, 4)  Banana, (0, 3)   Orange, (2, 4)
     //    Book, (4, 2)   Note, (1, 3)     Orange, (1, 3)

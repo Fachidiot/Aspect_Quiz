@@ -36,6 +36,6 @@ public class Keyboard : MonoBehaviour
     public void InputButton(string _input)
     {
         InputManager.KeyInput(_input);
-        Debug.Log(_input);
+        //Debug.Log(_input);
     }
 }

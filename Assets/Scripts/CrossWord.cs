@@ -8,6 +8,15 @@ public class CrossWord : MonoBehaviour
     private static List<Word> m_WordList;
 
     private int[] m_UsedIndex;
+
+    public bool Cross()
+    {
+        if(m_WordList.Count <= 0)
+        {
+            return false;
+        }
+        return true;
+    }
     
     void Start()
     {
@@ -16,8 +25,60 @@ public class CrossWord : MonoBehaviour
         {
             CheckCross(i);
         }
+
+        string filePath = getPath();
+
+        System.IO.StreamReader sr = new System.IO.StreamReader(filePath);
+        if (sr.BaseStream.Length == 0)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            for (int index = 0; index < m_WordList.Count; index++)
+            {
+                sb.AppendLine(m_WordList[index].Answer);
+                for (int i = 0; i < m_WordList[index].IndexInfo.Count; i++)
+                {
+                    for (int j = 0; j < m_WordList[index].IndexInfo[i].Count; j++)
+                    {
+                        sb.AppendLine(m_WordList[index].IndexInfo[i][j]);
+                    }
+                }
+            }
+
+            sr.Close();
+
+            System.IO.StreamWriter sw = new System.IO.StreamWriter(filePath);
+            sw.WriteLine(sb);
+            sw.Close();
+        }
         //print();
     }
+
+    private void Update()
+    {
+        if(m_WordList.Count <= 0)
+        {
+            SetList();
+            for (int i = 0; i < m_WordList.Count; i++)
+            {
+                CheckCross(i);
+            }
+        }
+    }
+
+    private string getPath()
+    {
+#if UNITY_EDITOR
+        return Application.dataPath + "/Resource/CrossInfo.csv";
+#elif UNITY_ANDROID
+        return Application.persistentDataPath+"CrossInfo.csv";
+#elif UNITY_IPHONE
+        return Application.persistentDataPath+"/"+"CrossInfo.csv";
+#else
+        return Application.dataPath +"/"+"CrossInfo.csv";
+#endif
+    }
+
 
     // 체크용
     void print()
@@ -73,6 +134,10 @@ public class CrossWord : MonoBehaviour
 
     public List<Word> GetList()
     {
+        if(m_WordList == null)
+        {
+            return null;
+        }
         var temp = m_WordList.ToList();
         return temp;
     }
