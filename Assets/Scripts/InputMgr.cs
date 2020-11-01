@@ -212,6 +212,7 @@ public class InputMgr : MonoBehaviour
 
             // 문제를 틀렸을때는 다시 해당 문제로 가게 해줘야함
             m_IsClicked = true;
+            HighLight();
         }
         yield return null;
     }

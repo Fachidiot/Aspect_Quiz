@@ -92,7 +92,7 @@ public class WordMgr : MonoBehaviour
 
         if (m_GridMakeList.Count <= 0 || !m_bMakeAble)
         {
-            Debug.Log("Root Word 생성 시퀀스");
+            //Debug.Log("Root Word 생성 시퀀스");
             // 생성전 루트가 생성될 위치를 잡아준다.
             SetRootPos();
 
@@ -103,7 +103,7 @@ public class WordMgr : MonoBehaviour
 
         if(m_bMakeAble)
         {
-            Debug.Log("Cross Word 생성 시퀀스");
+            //Debug.Log("Cross Word 생성 시퀀스");
             safeloop++;
             if (m_CurrentWordCount % 5 == 0)
             {
@@ -114,10 +114,9 @@ public class WordMgr : MonoBehaviour
             {
                 if(m_CurrentWordCount >= 10)
                 {
-                    var temp = GameObject.Find(m_MakeList[m_Reset + 5].Answer + " " + 0.ToString());
-                    MakeX = temp.transform.localPosition.x;
-                    MakeY = temp.transform.localPosition.y;
-                    m_MakeWord = m_MakeList[m_Reset];
+                    SetRootPos();
+                    RootSet();
+                    return;
                 }
                 else
                 {
@@ -138,7 +137,7 @@ public class WordMgr : MonoBehaviour
 
     void UseWord(Word _word)
     {
-        Debug.Log(_word.Answer + " 단어 삭제");
+        //Debug.Log(_word.Answer + " 단어 삭제");
         m_WordList.Remove(_word);
     }
     static int count = 0;
@@ -245,6 +244,10 @@ public class WordMgr : MonoBehaviour
     }
     bool CheckRoot()
     {
+        if (!CheckQuater(true))
+        {
+            return false;
+        }
         // 생성전에 생성될 위치에 자리가 있는지 확인
         for (int i = 0; i < m_GridMakeList.Count; i++)
         {
@@ -254,7 +257,7 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(m_GridMakeList[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
                 if (m_GridMakeList[i].transform.localPosition == new Vector3(MakeX + ((j - 1) * 110), MakeY, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
@@ -264,14 +267,14 @@ public class WordMgr : MonoBehaviour
                     //Debug.Log(m_GridMakeList[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
                     if (m_GridMakeList[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY + 110, 0))
                     { // 비어있지 않을때
-                        Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                        //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                         return false;
                     }
 
                     //Debug.Log(m_GridMakeList[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
                     if (m_GridMakeList[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY - 110, 0))
                     { // 비어있지 않을때
-                        Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                        //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                         return false;
                     }
                 }
@@ -306,7 +309,7 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
                 if (templist[i].transform.localPosition == new Vector3(MakeX, MakeY + (j * 110), 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
@@ -314,14 +317,14 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
                 if (templist[i].transform.localPosition == new Vector3(MakeX + 1, MakeY + (j * 110), 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
                 if (templist[i].transform.localPosition == new Vector3(MakeX - 1, MakeY + (j * 110), 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
             }
@@ -332,7 +335,7 @@ public class WordMgr : MonoBehaviour
     }
     bool CheckCrossHorizontal(bool first = true)
     {
-        if (!CheckQuater())
+        if (!CheckQuater(m_bVertical))
         {
             return false;
         }
@@ -362,7 +365,7 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
                 if (templist[i].transform.localPosition == new Vector3(MakeX, MakeY + ((j - 1) * 110), 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_TempWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
@@ -372,14 +375,14 @@ public class WordMgr : MonoBehaviour
                     //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
                     if (templist[i].transform.localPosition == new Vector3(MakeX + 110, MakeY + (j * 110), 0))
                     { // 비어있지 않을때
-                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        //Debug.Log(m_TempWord.Answer + " 단어 생성실패");
                         return false;
                     }
 
                     //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
                     if (templist[i].transform.localPosition == new Vector3(MakeX - 110, MakeY + (j * 110), 0))
                     { // 비어있지 않을때
-                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        //Debug.Log(m_TempWord.Answer + " 단어 생성실패");
                         return false;
                     }
                 }
@@ -414,7 +417,7 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
                 if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
@@ -422,14 +425,14 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
                 if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY + 1, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
                 if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY - 1, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_MakeWord.Answer + " 단어 생성실패");
                     return false;
                 }
             }
@@ -440,7 +443,7 @@ public class WordMgr : MonoBehaviour
     }
     bool CheckCrossVertical(bool first = true)
     {
-        if (!CheckQuater())
+        if (!CheckQuater(m_bVertical))
         {
             return false;
         }
@@ -471,7 +474,7 @@ public class WordMgr : MonoBehaviour
                 //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX, MakeY + (j * 110), 0)); -> 원인 : grid생성중 +=로 위치를 변경시켜주었기 때문에 편차가 남
                 if (templist[i].transform.localPosition == new Vector3(MakeX + ((j - 1) * 110), MakeY, 0))
                 { // 비어있지 않을때
-                    Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                    //Debug.Log(m_TempWord.Answer + " 단어 생성실패");
                     return false;
                 }
 
@@ -481,14 +484,14 @@ public class WordMgr : MonoBehaviour
                     //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
                     if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY + 110, 0))
                     { // 비어있지 않을때
-                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        //Debug.Log(m_TempWord.Answer + " 단어 생성실패");
                         return false;
                     }
 
                     //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX - 110, MakeY + (j * 110), 0));
                     if (templist[i].transform.localPosition == new Vector3(MakeX + (j * 110), MakeY - 110, 0))
                     { // 비어있지 않을때
-                        Debug.Log(m_TempWord.Answer + " 단어 생성실패");
+                        //Debug.Log(m_TempWord.Answer + " 단어 생성실패");
                         return false;
                     }
                 }
@@ -502,6 +505,13 @@ public class WordMgr : MonoBehaviour
     // 루트가 될 단어를 생성해줌
     void RootSet()
     {
+        if (m_CurrentWordCount >= WordCount)
+        {
+            safeloop = 0;
+            m_bMakeAble = false;
+            return;
+        }
+
         // 루트가 될 단어를 랜덤으로 뽑는다.
         var index = Random.Range(0, m_WordList.Count);
         m_MakeWord = m_WordList[index];
@@ -530,6 +540,8 @@ public class WordMgr : MonoBehaviour
         //    MakeY = temp.transform.localPosition.y;
         //}
 
+        m_bVertical = true;
+
         if(m_CurrentWordCount == 0)
         {
             Debug.Log(m_MakeWord.Answer + " 단어를 생성합니다.");
@@ -554,8 +566,14 @@ public class WordMgr : MonoBehaviour
             m_bMakeAble = true;
             return;
         }
+        else
+        {
+            SetRootPos();
+            RootSet();
+        }
 
         Debug.Log("Root Word 생성 실패");
+        m_MakeWord = null;
         safeloop++;
         SetRootPos();
         m_bMakeAble = false;
@@ -569,7 +587,6 @@ public class WordMgr : MonoBehaviour
         // 단어 찾기 전 만들수 있는지 여부
         if (m_CurrentWordCount >= WordCount)
         {
-            Debug.Log("모든 단어가 완성 되었습니다!");
             safeloop = 0;
             m_bMakeAble = false;
             return;
@@ -672,7 +689,7 @@ public class WordMgr : MonoBehaviour
                     }
                     else
                     { // 단어가 이미 생성되었을때
-                        Debug.Log(temp_string[0] + "해당 단어는 이미 생성되었습니다. 건너뜀");
+                        //Debug.Log(temp_string[0] + "해당 단어는 이미 생성되었습니다. 건너뜀");
                         safeloop++;
                         continue;
                     }
@@ -857,54 +874,106 @@ public class WordMgr : MonoBehaviour
         }
     }
 
-    bool CheckQuater()
+    bool CheckQuater(bool vertical)
     {
         // 생성될때 Rect안에만 생성되도록 체크
-        if (m_MakeWord.Length * 110 + StartX >= 0)
-        { // x 양수
-            if(m_MakeWord.Length * 110 + StartX < MaxX)
-            {
-                if (m_MakeWord.Length * 110 + StartY >= 0)
-                { // 양수
-                    if (m_MakeWord.Length * 110 + StartY < MaxY)
-                    {
-                        return true;
+        if (vertical)
+        {
+            if (StartX < 0)
+            { // x 음수
+                if (StartX < MinX + 110)
+                {
+                    if(StartY < 0)
+                    { // y 음수
+                        if(StartY < MinY + 110)
+                        {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
-                }
-                else
-                { // 음수
-                    if (StartY > MinY)
-                    {
-                        return true;
+                    else
+                    { // y 양수
+                        if(StartY < MaxY - 110)
+                        {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
                 }
+                return false;
             }
-            return false;
+            else
+            { // x 양수
+                if (StartX + m_MakeWord.Length * 110 < MaxX - 110)
+                {
+                    if (StartY < 0)
+                    { // y 음수
+                        if (StartY < MinY + 110)
+                        {
+                            return true;
+                        }
+                        return false;
+                    }
+                    else
+                    { // y 양수
+                        if (StartY < MaxY - 110)
+                        {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+                return false;
+            }
         }
         else
-        { // x 음수
-            if (StartX < MinX)
-            {
-                if (m_MakeWord.Length * 110 + StartY >= 0)
-                { // 양수
-                    if (m_MakeWord.Length * 110 + StartY < MaxY)
-                    {
-                        return true;
+        {
+            if (StartY < 0)
+            { // x 음수
+                if (StartY < MinY + 110)
+                {
+                    if (StartX < 0)
+                    { // y 음수
+                        if (StartX < MinX + 110)
+                        {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
-                }
-                else
-                { // 음수
-                    if (StartY > MinY)
-                    {
-                        return true;
+                    else
+                    { // y 양수
+                        if (StartX < MaxX - 110)
+                        {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
                 }
+                return false;
             }
-            return false;
+            else
+            { // x 양수
+                if (StartY + m_MakeWord.Length * 110 < MaxY - 110)
+                {
+                    if (StartX < 0)
+                    { // y 음수
+                        if (StartX < MinX + 110)
+                        {
+                            return true;
+                        }
+                        return false;
+                    }
+                    else
+                    { // y 양수
+                        if (StartX < MaxX - 110)
+                        {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+                return false;
+            }
         }
     }
 
